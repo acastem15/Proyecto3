@@ -207,14 +207,12 @@ function g(s) begin
 	return λ
 end
 
-
-
 function createDecoder():ITransducer begin
-	Q:= {⟨d,s,pos⟩ | d in {3,2,5}, s in ('a'‥'z'),pos in (0‥4)∪{"_"}  }  ∪ {3,2,5,"I","E"} 
-	Σ´ :=('a'‥'z')∪{ ':', '2', '3', '5'}
-	Σ:=Σ´∪{ '#'}
+	Q:= ('a'‥'z')∪ {⟨Fr, cantI⟩ | Fr="Fr", 0 <=cantI<=7}∪ {⟨let,pos,cant, eLetr⟩ | let in ('a'‥'z'), 0 <= pos <=8,0 <= cant<= 7, 0<=eLetr<=1}  ∪ {"I"} ∪ {"E"}
+	Σ´ :=('a'‥'z')
+	Σ:=('a'‥'z')∪('0'‥'8')∪{'$'}
 	q₀:= "I"
-	F:=	 {⟨d,s,pos⟩ | d in {3,2,5}, s in ('a'‥'z'),0 <= pos < 5  }
+	F:=	 {"I"}
 
 	return 	GDeterministicTransducer(Q,Σ,Σ´,q₀,F,δ1,g,h1)
 end
@@ -223,42 +221,163 @@ end
 	
 	
 function δ1(state,input) begin
-  if state="I" and input in { '2', '3', '5'}  then return input - '0'
-  elseif state in {2,3,5} and input in ('a'‥'z') then return ⟨state, input,"_"⟩
-  else return "E"
-  end
+  if state="I" and input in ('a'‥'z') then 
+  	let := input
+ 	return ⟨input,0, 0, 1⟩
+ 	
+ 	
+ 	
+ 	
+ 	
+   elseif |state| = 4 and state[2]<=state[1] then
+ 
+   		if state[3]==0 then 
+   			
+   			if input == '$' then
+	 			return  ⟨"Fr", state[2]⟩
+	 		
+		    elseif input==state[0] then //No deberia leer una misma letra del inicio algo como a3a7c 
+	   			return "E"
+	   	    elseif input !=state[0] and input in ('a'‥'z')  then // leer letra diferente al inicio
+	   	 	
+		   	 	let, pos,cant := state[0],state[1], state[2]
+	   			return ⟨let,pos,cant,1⟩
+	   			
+	   		else //No lee letra
+	   			return "E"
+	   		end
+   			
+   	
+   			
+   		else
+   			if input == '$' then
+	 			return "E"
+   			
+   			elseif input in ('a'‥'z')  then //No leer numLLLLL
+   					return "E"
+
+   			elseif input in ('1'‥'7') then
+   				iNum = input-'0'
+   				
+   				if iNum == state[1] then
+			 		let, pos,cant := state[0],iNum, state[2]
+			 		return ⟨let,(pos+1), cant,0⟩
+		
+			 	elseif iNum > state[1] then
+				 		
+				 		let, pos,cant := state[0],state[1], state[2]
+				 		return ⟨let,iNum+1, cant+(iNum-pos-1),0⟩
+			 	else
+			 		return "E"
+				 end
+			else
+				return "E"
+
+   			end
+ 
+   		end
+   		
+   		
+   		
+	 elseif |state| = 2  then 
+	 	iNum =  input-'0'
+		if iNum==state[1]  then
+			return "I"
+		
+		else
+			return "E"
+			
+		end
+   	
+ 	  else
+ 		return "E"
+ 		
+ 	  end
+
 end
-// ------
-function δ1(⟨d,s,pos⟩,input) begin
-  if pos="_" and input = ':' then return ⟨d,s,1⟩
-  elseif pos="_"  then return "E"
-  elseif input = '#' and pos!=0 then return "E"
-  elseif input = s and pos =0 then return "E"
-  elseif input in ('a'‥'z')∪{'#'} then return ⟨d,s,(pos+1)%d⟩
-  else return "E"
-  end
-end
+
 
 
 
 	
 function h1(state,input) begin 
-  if state="I" and input in { '2', '3', '5'}  then return input-'0' 
-  elseif state in {2,3,5} and input in ('a'‥'z') then return input
-  else return λ
-  end
+	
+	if state="I" and input in ('a'‥'z') then 
+  
+ 		return input
+ 	
+   elseif |state| = 4 and state[2]<=state[1] then
+ 
+   		if state[3]==0 then 
+   			
+   			if input == '$' then
+	 			return  λ
+	 		
+		    elseif input==state[0] then //No deberia leer una misma letra del inicio algo como a3a7c 
+	   			return λ
+	   	    elseif input !=state[0] and input in ('a'‥'z')  then // leer letra diferente al inicio
+
+	   			return input
+	   			
+	   		else //No lee letra
+	   			return λ
+	   		end
+   			
+   	
+   			
+   		else
+   			if input == '$' then
+	 			return λ
+   			
+   			elseif input in ('a'‥'z')  then //No leer numLLLLL
+   					return λ
+
+   			elseif input in ('1'‥'7') then
+   				iNum = input-'0'
+   				
+   				if iNum == state[1] then
+			 		
+			 		return λ
+		
+			 	elseif iNum > state[1] then
+			 		let, pos,cant := state[0],state[1], state[2]
+			 		letPoner := cant+(iNum-pos-1)
+			 		inputLet :=(state[0]:String)
+			 		out :=""
+			 		i := 0
+			 		while i<letPoner  do
+			 			out=out+inputLet
+			 			i= i+1
+			 		end
+			
+				 		return out
+			 	else
+			 		return λ
+				 end
+			else
+				return λ
+
+   			end
+ 
+   		end
+   		
+   		
+   		
+	 elseif |state| = 2  then 
+	 	iNum =  input-'0'
+		if iNum==state[1]  then
+			return λ
+		
+		else
+			return λ
+			
+		end
+   	
+ 	  else
+ 		return λ
+ 		
+ 	  end
 end
-
-function h1(⟨d,s,pos⟩,input) begin
- 	if pos="_" and input = ':' then return input
-    elseif input = '#' and pos=0 then return s
- 	elseif input in ('a'‥'z') and pos=1 then return shiftSymbol(input,-d)
- 	elseif input in ('a'‥'z')  then return input
-   	else return λ
-  	end
-end
-
-
 
 
 
@@ -278,3 +397,14 @@ end
 end
 
 
+
+function result(letter, pos) begin
+	var  r : Character
+	
+	var rpos : int
+	rpos := pos+1
+   	r:= rpos+'0'
+   	
+   	//r:=r+letter
+return r
+end
