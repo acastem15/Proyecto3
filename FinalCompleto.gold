@@ -1,0 +1,391 @@
+ // -----------------------
+// Silvia Takahashi
+// UNIVERSIDAD DE LOS ANDES
+// Codes and decodes
+// Reads a string  of the form dσ:ω
+// where   d in {2,3,5}
+//  s  in {a,‥,z}
+//  W in {a,‥z}*
+//   outputs dσ:ω'   ω':  if σ appears in positions p such that p%d = 0 then it is replaced by #
+//    symbols that appear in positions such that p%d =1 are replaced by the symbol shifted  d  positions
+//      for instance if the symbol is a and d  is 2 then the answer would be c do
+//  ω=σ1‥.σn
+// ω' =ρ1‥rρ
+//   ρi = # if   σi =s and  (i%d) = 0
+//   ρi =  shift( σi, d) if  (i%d) = 1
+//   ρi =   σi  otherwise
+
+
+
+using gold.**
+  
+         
+  
+var A
+var B
+
+procedure main(args:String[]) begin
+	var sc:java.util.Scanner(System.$in)
+    
+    A = ('a'‥'z')
+    B = ('0'‥'9')
+    
+	coder:=createCoder()
+   	deCoder:=createDecoder()
+
+    
+    //GAutomataFrame.show(coder)
+   //GAutomataFrame.show(deCoder)
+   
+  	
+	
+  	Utilities.testCodeDecode(coder,deCoder)
+		
+end
+
+
+
+
+
+function createCoder():ITransducer begin
+	
+	
+	Q:= ('a'‥'z')∪ {⟨let,cant,pos⟩ | let in ('a'‥'z'), 0 <= cant <=6,0 <= pos <= 6}  ∪ {"I"} ∪ {"E"}
+	
+	Σ :=('a'‥'z')
+	Σ´:=Σ∪{'$'}∪('0'‥'9')∪{'.'}
+	q₀:= "I"
+	F:=	 {"I"}
+
+	return 	GDeterministicTransducer(Q,Σ,Σ´,q₀,F,δ,g,h)
+end
+
+	
+	
+	
+function δ(state,input) begin
+   
+   	if state="I" and input in ('a'‥'z')  then return input //Crea el primer estado segun lo que haya leido
+   		
+ 	elseif state in ('a'‥'z')  and input == state then 
+ 		
+ 		let = state
+ 		return ⟨let,1, 1⟩
+ 		
+ 	elseif state in ('a'‥'z')  and input != state then 
+ 		let= state
+ 		return ⟨let,0,1⟩
+ 		
+ 		
+ 	elseif |state| = 3 and state[1]<=state[2]  then
+ 		
+ 		
+ 		if state[2] == 6 then
+ 		
+ 			
+			if  input == state[0]  then
+	 	
+	 			return "I"
+	 		
+		 	elseif input != state[0] then
+		 	
+	 			return "I"
+	 		end
+	
+ 		else
+ 			if input == state[0]then
+	 		
+		 		let,cant,pos:=state[0], state[1], state[2]
+		 		return ⟨let,(cant+1),(pos+1)⟩
+	 		
+		 	elseif input != state[0]then
+		 		
+		 		let,cant,pos:=state[0], state[1], state[2]
+		 		return ⟨let,(cant),(pos+1)⟩
+
+	 		end
+	 	end
+ 	
+ 	else return "E"
+ 	end
+ 	
+ 	
+ 	/*
+  	elseif state in {2,3,5,"I","E"} then return "E"
+ 	elseif |state| = 2  and input = ':'   then return ⟨state[0], state[1], 1⟩
+  	elseif |state| = 3 and input in ('a'‥'z') then 
+  		d,s,pos:=state[0], state[1], state[2]
+  		return ⟨d,s,(pos+1)%d⟩
+  	else return "E"
+   	end*/
+
+end
+
+
+
+	
+function h(state,input) begin
+   
+	if state="I" and input in ('a'‥'z')  then 
+			
+		return input
+		
+	elseif state in ('a'‥'z')  and input == state then 
+ 
+ 		return λ
+ 		
+ 	elseif state in ('a'‥'z')  and input != state then 
+ 		 c :=(1:String)
+ 		 d :=(input:String)
+ 
+ 		return c+input
+ 		
+ 		
+ 	elseif |state| = 3 and state[1]<=state[2]  then
+ 		
+ 		if  state[2]==6 then
+ 			
+ 			if  input == state[0]  then
+ 				rCan = state[1]+1
+ 				can :=(rCan:String)
+ 	
+	 	
+	 			return "$"+can
+	 		
+		 	elseif input != state[0] then
+		 		
+		 		rpos := state[2]+1
+		 		
+		 		p :=(rpos:String)
+ 		 		l :=(input:String)
+		 		c :=(state[1]:String)
+	 			return p+l+"$"+c
+			end
+ 			
+ 
+ 			
+ 		else
+ 			if input == state[0]then
+	 		
+		 		return λ
+	 		
+		 	elseif input != state[0]then
+		 		
+		 		rpos := state[2]+1
+		 		
+		 		p :=(rpos:String)
+ 		 		l :=(input:String)
+		 		
+		 	
+		 		return p+l
+
+	 		end
+	 	end
+	 	
+	
+	 	
+	 else
+ 
+ 		return λ
+
+ 	end
+
+
+
+
+
+
+
+
+end
+
+
+
+
+
+function g(s) begin
+	return λ
+end
+
+function createDecoder():ITransducer begin
+	Q:= ('a'‥'z')∪ {⟨Fr, cantI⟩ | Fr="Fr", 0 <=cantI<=8}∪ {⟨let,pos,cant, eLetr⟩ | let in ('a'‥'z'), 0 <= pos <=8,0 <= cant<= 7, 0<=eLetr<=1}  ∪ {"I"} ∪ {"E"}
+	Σ´ :=('a'‥'z')
+	Σ:=('a'‥'z')∪('0'‥'8')∪{'$'}
+	q₀:= "I"
+	F:=	 {"I"}
+
+	return 	GDeterministicTransducer(Q,Σ,Σ´,q₀,F,δ1,g,h1)
+end
+
+	
+	
+	
+function δ1(state,input) begin
+  if state="I" and input in ('a'‥'z') then 
+  	let := input
+ 	return ⟨input,1, 0, 1⟩
+
+   elseif |state| = 4 and state[2]<=state[1] then
+ 
+   		if state[3]==0 then 
+   			
+   			if input == '$' then
+					return   ⟨"Fr",state[2]+(8-state[1])⟩
+	
+		    elseif input==state[0] then //No deberia leer una misma letra del inicio algo como a3a7c 
+	   			return "E"
+	   	    elseif input !=state[0] and input in ('a'‥'z')  then // leer letra diferente al inicio
+	   	 	
+		   	 	let, pos,cant := state[0],state[1], state[2]
+	   			return ⟨let,pos,cant,1⟩
+	   			
+	   		else //No lee letra
+	   			return "E"
+	   		end
+   			
+   	
+   			
+   		else
+   			if input == '$' then
+					return   ⟨"Fr",state[2]+(8-state[1])⟩
+   			
+   			elseif input in ('a'‥'z')  then //No leer numLLLLL
+   					return "E"
+
+   			elseif input in ('1'‥'7') then
+   				iNum = input-'0'
+   				
+   				if iNum == state[1] then
+			 		let, pos,cant := state[0],iNum, state[2]
+			 		return ⟨let,(pos+1), cant,0⟩
+		
+			 	elseif iNum > state[1] then
+				 		
+				 		let, pos,cant := state[0],state[1], state[2]
+				 		return ⟨let,iNum+1, cant+(iNum-pos),0⟩
+			 	else
+			 		return "E"
+				 end
+			else
+				return "E"
+
+   			end
+ 
+   		end
+   		
+   		
+   		
+	 elseif |state| = 2  then 
+	 	
+	 	iNum =  input-'0'
+		if iNum==state[1]  then
+			return "I"
+		
+		else
+			return "E"
+			
+		end
+   	
+ 	  else
+ 		return "E"
+ 		
+ 	  end
+
+end
+
+
+
+
+	
+function h1(state,input) begin 
+	
+	if state="I" and input in ('a'‥'z') then 
+  
+ 		return input
+ 	
+   elseif |state| = 4 and state[2]<=state[1] then
+ 
+   		if state[3]==0 then 
+   			
+   			if input == '$' then
+   			return λ
+	 				
+   	
+		    elseif input==state[0] then //No deberia leer una misma letra del inicio algo como a3a7c 
+	   			return λ
+	   	    elseif input !=state[0] and input in ('a'‥'z')  then // leer letra diferente al inicio
+
+	   			return input
+	   			
+	   		else //No lee letra
+	   			return λ
+	   		end
+   			
+   	
+   			
+   		else
+   			if input == '$' then
+	 			inputLet :=(state[0]:String)
+				cantL = 8-state[1]
+				outLF = ""
+				i = 0
+				while i<cantL  do
+			 			outLF = outLF+inputLet
+			 			i= i+1
+			 		end
+				
+				
+				return  outLF
+				
+   			
+   			elseif input in ('a'‥'z')  then //No leer numLLLLL
+   					return λ
+
+   			elseif input in ('1'‥'7') then
+   				iNum = input-'0'
+   				
+   				if iNum == state[1] then
+			 		
+			 		return λ
+		
+			 	elseif iNum > state[1] then
+			 		let, pos,cant := state[0],state[1], state[2]
+			 		letPoner := (iNum-pos)
+			 		inputLet :=(state[0]:String)
+			 		out :=""
+			 		i := 0
+			 		while i<letPoner  do
+			 			out=out+inputLet
+			 			i= i+1
+			 		end
+			
+				 		return out
+			 	else
+			 		return λ
+				 end
+			else
+				return λ
+
+   			end
+ 
+   		end
+   		
+   		
+   		
+	 elseif |state| = 2  then 
+	 	iNum =  input-'0'
+		if iNum==state[1]  then
+			return λ
+		
+		else
+			return λ
+			
+		end
+   	
+ 	  else
+ 		return λ
+ 		
+ 	  end
+end
+
+
